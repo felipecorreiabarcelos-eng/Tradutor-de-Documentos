@@ -8,8 +8,9 @@ Disciplina: [coloque a disciplina aqui]
 Descrição:
     Este programa lê um arquivo PDF escrito em inglês, extrai o texto
     página por página, traduz cada página para português usando a
-    biblioteca googletrans e gera um novo arquivo de texto contendo
-    o texto original e a tradução, para que seja possível comparar os dois.
+    biblioteca deep-translator (que usa o Google Tradutor por baixo)
+    e gera um novo arquivo de texto contendo o texto original e a 
+    tradução, para que seja possível comparar os dois.
 
 Bibliotecas usadas:
     - PyPDF2         -> para ler o PDF e extrair o texto
@@ -21,6 +22,7 @@ Como instalar as bibliotecas (rodar no terminal):
 """
 
 import sys
+import os
 from PyPDF2 import PdfReader
 from deep_translator import GoogleTranslator
 
@@ -35,12 +37,22 @@ def ler_pdf(caminho_do_arquivo):
     é o texto de uma página do documento.
     """
     print(f"Lendo o arquivo: {caminho_do_arquivo}")
+    
+    # Verifica se o arquivo existe
+    if not os.path.exists(caminho_do_arquivo):
+        print(f"❌ Erro: O arquivo '{caminho_do_arquivo}' não foi encontrado.")
+        return None
 
-    leitor = PdfReader(caminho_do_arquivo)
+    try:
+        leitor = PdfReader(caminho_do_arquivo)
+    except Exception as erro:
+        print(f"❌ Erro ao abrir o PDF: {erro}")
+        return None
+    
     texto_das_paginas = []
 
     numero_de_paginas = len(leitor.pages)
-    print(f"O PDF tem {numero_de_paginas} página(s).")
+    print(f"✓ O PDF tem {numero_de_paginas} página(s).")
 
     for i in range(numero_de_paginas):
         pagina = leitor.pages[i]
@@ -78,7 +90,7 @@ def quebrar_texto_em_blocos(texto, tamanho_maximo):
             posicao_quebra = fim
 
         blocos.append(texto[inicio:posicao_quebra])
-        inicio = posicao_quebra
+        inicio = posicao_quebra + 1  # ⭐ CORREÇÃO: agora avança corretamente
 
     return blocos
 
@@ -100,7 +112,7 @@ def traduzir_texto(texto, tradutor):
         try:
             texto_traduzido += tradutor.translate(bloco)
         except Exception as erro:
-            print(f"Ops, deu erro ao traduzir um trecho: {erro}")
+            print(f"⚠️  Aviso: erro ao traduzir um trecho: {erro}")
             texto_traduzido += "[ERRO AO TRADUZIR ESTE TRECHO]"
 
     return texto_traduzido
@@ -111,19 +123,22 @@ def salvar_resultado(paginas_originais, paginas_traduzidas, caminho_saida):
     Salva um arquivo .txt com o texto original e a tradução de cada página,
     um embaixo do outro, para facilitar a comparação.
     """
-    with open(caminho_saida, "w", encoding="utf-8") as arquivo:
-        for numero_pagina in range(len(paginas_originais)):
-            arquivo.write(f"===== PÁGINA {numero_pagina + 1} =====\n\n")
+    try:
+        with open(caminho_saida, "w", encoding="utf-8") as arquivo:
+            for numero_pagina in range(len(paginas_originais)):
+                arquivo.write(f"===== PÁGINA {numero_pagina + 1} =====\n\n")
 
-            arquivo.write("--- TEXTO ORIGINAL (Inglês) ---\n")
-            arquivo.write(paginas_originais[numero_pagina])
-            arquivo.write("\n\n")
+                arquivo.write("--- TEXTO ORIGINAL (Inglês) ---\n")
+                arquivo.write(paginas_originais[numero_pagina])
+                arquivo.write("\n\n")
 
-            arquivo.write("--- TRADUÇÃO (Português) ---\n")
-            arquivo.write(paginas_traduzidas[numero_pagina])
-            arquivo.write("\n\n")
+                arquivo.write("--- TRADUÇÃO (Português) ---\n")
+                arquivo.write(paginas_traduzidas[numero_pagina])
+                arquivo.write("\n\n")
 
-    print(f"Arquivo traduzido salvo em: {caminho_saida}")
+        print(f"✓ Arquivo traduzido salvo em: {caminho_saida}")
+    except Exception as erro:
+        print(f"❌ Erro ao salvar o arquivo: {erro}")
 
 
 def main():
@@ -137,9 +152,19 @@ def main():
 
     # 1) Lê o PDF e separa o texto por página
     paginas_originais = ler_pdf(caminho_pdf)
+    
+    if paginas_originais is None:
+        return
 
     # 2) Traduz cada página
-    tradutor = GoogleTranslator(source="en", target="pt")
+    try:
+        tradutor = GoogleTranslator(source="en", target="pt")
+    except Exception as erro:
+        print(f"❌ Erro ao inicializar o tradutor: {erro}")
+        print("Certifique-se de que a biblioteca 'deep-translator' está instalada:")
+        print("  pip install deep-translator")
+        return
+    
     paginas_traduzidas = []
 
     for i, texto_pagina in enumerate(paginas_originais):
@@ -150,7 +175,7 @@ def main():
     # 3) Salva o resultado final (original + tradução) em um .txt
     salvar_resultado(paginas_originais, paginas_traduzidas, caminho_saida)
 
-    print("Tradução concluída!")
+    print("✓ Tradução concluída!")
 
 
 if __name__ == "__main__":
