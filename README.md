@@ -65,12 +65,20 @@ This is an example text extracted from the PDF...
 Este é um texto de exemplo extraído do PDF...
 ```
 
+## 🐛 Correções recentes (v1.1)
+
+- ✅ Corrigido bug crítico de loop infinito na função `quebrar_texto_em_blocos`
+- ✅ Melhorado tratamento de erros e mensagens do usuário
+- ✅ Adicionada validação para verificar se o arquivo PDF existe
+- ✅ Atualizada documentação para refletir o uso correto de `deep-translator`
+
 ## 🚧 Possíveis melhorias futuras
 
 - [ ] Gerar a saída em `.docx` ou `.pdf` em vez de `.txt`
 - [ ] Suportar outros idiomas de origem/destino
 - [ ] Criar uma interface gráfica simples
 - [ ] Tratar PDFs escaneados (usando OCR)
+- [ ] Adicionar testes automatizados
 
 ## 📄 Licença
 
